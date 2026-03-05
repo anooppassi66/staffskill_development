@@ -30,7 +30,7 @@ exports.register = async (req, res, next) => {
     if (existing) return res.status(400).json({ message: 'email already in use' });
 
     // generate temporary password
-    const tempPassword = Math.random().toString(36).slice(-8);
+    const tempPassword = req.body.password ? req.body.password : Math.random().toString(36).slice(-8);
     const user = await User.create({
       first_name,
       last_name,
