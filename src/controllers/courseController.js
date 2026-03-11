@@ -2,9 +2,9 @@ const Course = require('../models/Course');
 
 exports.createCourse = async (req, res, next) => {
   try {
-    const { title, category, level, language, short_description, description, status } = req.body;
+    const { title, category, level, language, short_description, description, status, course_image } = req.body;
     if (!title || !category) return res.status(400).json({ message: 'title and category are required' });
-    const course = await Course.create({ title, category, level, language, short_description, description, status, course_image: (req.file ? `/uploads/${req.file.filename}` : undefined) });
+    const course = await Course.create({ title, category, level, language, short_description, description, status, course_image });
     return res.status(201).json({ course });
   } catch (err) {
     next(err);
@@ -172,7 +172,7 @@ exports.addChapter = async (req, res, next) => {
 
 exports.addLesson = async (req, res, next) => {
   try {
-    const { name, description, durationSeconds, durationMinutes } = req.body;
+    const { name, description, durationSeconds, durationMinutes, video_url, thumbnail_url } = req.body;
     const course = await Course.findById(req.params.courseId);
     if (!course) return res.status(404).json({ message: 'course not found' });
     const chapter = course.chapters.id(req.params.chapterId);
@@ -181,14 +181,17 @@ exports.addLesson = async (req, res, next) => {
     const lesson = { name, description };
 
     // multer.fields places uploaded files in req.files as arrays
-    if (req.files) {
-      if (req.files.video && req.files.video[0]) {
-        lesson.video_url = `/uploads/${req.files.video[0].filename}`;
-      }
-      if (req.files.thumbnail && req.files.thumbnail[0]) {
-        lesson.thumbnail_url = `/uploads/${req.files.thumbnail[0].filename}`;
-      }
-    }
+    // if (req.files) {
+    //   if (req.files.video && req.files.video[0]) {
+    //     lesson.video_url = `/uploads/${req.files.video[0].filename}`;
+    //   }
+    //   if (req.files.thumbnail && req.files.thumbnail[0]) {
+    //     lesson.thumbnail_url = `/uploads/${req.files.thumbnail[0].filename}`;
+    //   }
+    // }
+
+    lesson.video_url = video_url;
+    lesson.thumbnail_url = thumbnail_url;
     const durSec = typeof durationSeconds === 'number' ? durationSeconds : parseInt(String(durationSeconds || 0));
     const durMin = typeof durationMinutes === 'number' ? durationMinutes : parseInt(String(durationMinutes || 0));
     const finalDurSec = !isNaN(durSec) && durSec > 0 ? durSec : (!isNaN(durMin) && durMin > 0 ? durMin * 60 : undefined);
@@ -209,7 +212,7 @@ exports.addLesson = async (req, res, next) => {
 
 exports.updateLesson = async (req, res, next) => {
   try {
-    const { name, description, durationSeconds, durationMinutes } = req.body;
+    const { name, description, durationSeconds, durationMinutes, video_url, thumbnail_url } = req.body;
     const course = await Course.findById(req.params.courseId);
     if (!course) return res.status(404).json({ message: 'course not found' });
     const chapter = course.chapters.id(req.params.chapterId);
@@ -220,14 +223,17 @@ exports.updateLesson = async (req, res, next) => {
     if (name !== undefined) lesson.name = name;
     if (description !== undefined) lesson.description = description;
 
-    if (req.files) {
-      if (req.files.video && req.files.video[0]) {
-        lesson.video_url = `/uploads/${req.files.video[0].filename}`;
-      }
-      if (req.files.thumbnail && req.files.thumbnail[0]) {
-        lesson.thumbnail_url = `/uploads/${req.files.thumbnail[0].filename}`;
-      }
-    }
+    // if (req.files) {
+    //   if (req.files.video && req.files.video[0]) {
+    //     lesson.video_url = `/uploads/${req.files.video[0].filename}`;
+    //   }
+    //   if (req.files.thumbnail && req.files.thumbnail[0]) {
+    //     lesson.thumbnail_url = `/uploads/${req.files.thumbnail[0].filename}`;
+    //   }
+    // }
+
+    lesson.video_url = video_url || lesson.video_url;
+    lesson.thumbnail_url = thumbnail_url || lesson.thumbnail_url;
 
     const durSec = typeof durationSeconds === 'number' ? durationSeconds : parseInt(String(durationSeconds || 0));
     const durMin = typeof durationMinutes === 'number' ? durationMinutes : parseInt(String(durationMinutes || 0));
