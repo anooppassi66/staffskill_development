@@ -83,6 +83,17 @@ exports.listUserEnrollments = async (req, res, next) => {
   }
 };
 
+exports.listPendingEnrollments = async (req, res, next) => {
+  try {
+    const enrollments = await Enrollment.find({ status: 'pending' })
+      .populate({ path: 'user', select: '-password' })
+      .populate({ path: 'course', populate: { path: 'category' } });
+    return res.json({ enrollments });
+  } catch (err) {
+    next(err);
+  }
+};
+
 exports.markLessonComplete = async (req, res, next) => {
   try {
     const userId = req.user.id;

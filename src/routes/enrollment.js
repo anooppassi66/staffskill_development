@@ -6,6 +6,7 @@ const enrollmentController = require('../controllers/enrollmentController');
 router.post('/:courseId/enroll', authMiddleware, enrollmentController.enroll);
 router.post('/:courseId/enroll/:employeeId', authMiddleware, requireRole('admin'), enrollmentController.enrollEmployee);
 router.post('/:enrollmentId/approve', authMiddleware, requireRole('admin'), enrollmentController.approveEnrollment);
+router.get('/pending', authMiddleware, requireRole('admin'), enrollmentController.listPendingEnrollments);
 router.get('/me', authMiddleware, enrollmentController.listUserEnrollments);
 router.post('/:courseId/complete-lesson', authMiddleware, [
 	require('express-validator').body('chapterId').isLength({ min: 1 }),
