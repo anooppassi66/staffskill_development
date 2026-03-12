@@ -20,21 +20,114 @@ exports.generateCertificate = async (userId, courseId, quizId, marks = 0, outOf 
   } catch {}
   const filePath = path.join(outDir, fileName);
 
-  const doc = new PDFDocument({ size: 'A4', margin: 50 });
+  const doc = new PDFDocument({ size: 'A4', layout: "landscape",margin: 50 });
   const stream = fs.createWriteStream(filePath);
   doc.pipe(stream);
 
-  doc.fontSize(20).text('Certificate of Completion', { align: 'center' });
-  doc.moveDown();
-  doc.fontSize(14).text(`This certifies that ${user.first_name || ''} ${user.last_name || ''}` , { align: 'center' });
-  doc.moveDown();
-  doc.fontSize(12).text(`Has successfully completed the course: ${course.title}`, { align: 'center' });
-  doc.moveDown();
-  doc.text(`Date: ${new Date().toLocaleDateString()}`, { align: 'center' });
-  if (Number.isFinite(marks) && Number.isFinite(outOf) && outOf > 0) {
-    doc.moveDown();
-    doc.text(`Marks: ${marks} / ${outOf}`, { align: 'center' });
-  }
+  // doc.fontSize(20).text('Certificate of Completion', { align: 'center' });
+  // doc.moveDown();
+  // doc.fontSize(14).text(`This certifies that ${user.first_name || ''} ${user.last_name || ''}` , { align: 'center' });
+  // doc.moveDown();
+  // doc.fontSize(12).text(`Has successfully completed the course: ${course.title}`, { align: 'center' });
+  // doc.moveDown();
+  // doc.text(`Date: ${new Date().toLocaleDateString()}`, { align: 'center' });
+  // if (Number.isFinite(marks) && Number.isFinite(outOf) && outOf > 0) {
+  //   doc.moveDown();
+  //   doc.text(`Marks: ${marks} / ${outOf}`, { align: 'center' });
+  // }
+
+  // doc.end();
+
+
+  // New code 
+
+   const pageWidth = doc.page.width;
+  const center = pageWidth / 2;
+
+  // Border
+  doc
+    .lineWidth(3)
+    .rect(20, 20, doc.page.width - 40, doc.page.height - 40)
+    .stroke("#1f4e79");
+
+  // Title
+  doc
+    .fontSize(40)
+    .fillColor("#1f4e79")
+    .font("Helvetica-Bold")
+    .text("CERTIFICATE", 0, 80, { align: "center" });
+
+  doc
+    .fontSize(20)
+    .fillColor("#555")
+    .text("OF COMPLETION", { align: "center" });
+
+  // Presented text
+  doc.moveDown(2);
+
+  doc
+    .fontSize(16)
+    .fillColor("#444")
+    .text("This certificate is proudly presented to", {
+      align: "center"
+    });
+
+  // Name
+  doc.moveDown(1);
+
+  doc
+    .fontSize(34)
+    .fillColor("#000")
+    .font("Helvetica-Bold")
+    .text(`${user.first_name || ''} ${user.last_name || ''}`, {
+      align: "center"
+    });
+
+  // Course text
+  doc.moveDown(1);
+
+  doc
+    .fontSize(16)
+    .font("Helvetica")
+    .text("for successfully completing the course", {
+      align: "center"
+    });
+
+  doc.moveDown(1);
+
+  doc
+    .fontSize(26)
+    .font("Helvetica-Bold")
+    .fillColor("#1f4e79")
+    .text(`${course.title}`, {
+      align: "center"
+    });
+
+  // Date + ID
+  doc.moveDown(2);
+
+  doc
+    .fontSize(14)
+    .fillColor("#444")
+    .text(`Date: ${new Date().toLocaleDateString()}`, center - 200, 420);
+
+  // Signature line
+  doc
+    .moveTo(center - 200, 480)
+    .lineTo(center - 80, 480)
+    .stroke();
+
+  doc
+    .moveTo(center + 80, 480)
+    .lineTo(center + 200, 480)
+    .stroke();
+
+  // doc
+  //   .fontSize(12)
+  //   .text("Instructor", center - 180, 485);
+
+  // doc
+  //   .text("Authorized Signature", center + 90, 485);
 
   doc.end();
 
