@@ -31,6 +31,7 @@ exports.attemptQuiz = async (req, res, next) => {
     if (quiz.course) {
       enrollment = await Enrollment.findOne({ user: userId, course: quiz.course });
       if (!enrollment) return res.status(403).json({ message: 'not enrolled for this course' });
+      if (enrollment.status && enrollment.status !== 'approved') return res.status(403).json({ message: 'enrollment not approved' });
       if (!enrollment.readyForQuiz) return res.status(400).json({ message: 'complete lessons before taking the quiz' });
     }
 

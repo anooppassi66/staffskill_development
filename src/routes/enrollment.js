@@ -1,9 +1,11 @@
 const express = require('express');
 const router = express.Router();
-const { authMiddleware } = require('../middleware/auth');
+const { authMiddleware, requireRole } = require('../middleware/auth');
 const enrollmentController = require('../controllers/enrollmentController');
 
 router.post('/:courseId/enroll', authMiddleware, enrollmentController.enroll);
+router.post('/:courseId/enroll/:employeeId', authMiddleware, requireRole('admin'), enrollmentController.enrollEmployee);
+router.post('/:enrollmentId/approve', authMiddleware, requireRole('admin'), enrollmentController.approveEnrollment);
 router.get('/me', authMiddleware, enrollmentController.listUserEnrollments);
 router.post('/:courseId/complete-lesson', authMiddleware, [
 	require('express-validator').body('chapterId').isLength({ min: 1 }),

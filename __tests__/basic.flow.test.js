@@ -23,7 +23,7 @@ describe('basic lms flow', () => {
 
   test('seed admin, login, create category, create course, enroll, complete, quiz flow', async () => {
     // seed admin
-    await request(app).post('/api/auth/seed-admin').expect(200);
+    await request(app).get('/api/auth/seed-admin').expect(200);
 
     // login
     const loginRes = await request(app).post('/api/auth/login').send({ email: 'admin@test.com', password: 'adminpass' }).expect(200);
@@ -58,11 +58,33 @@ describe('basic lms flow', () => {
     const empLogin = await request(app).post('/api/auth/login').send({ email: 'emp@test.com', password: tempPassword }).expect(200);
     const empToken = empLogin.body.token;
 
-    // enroll
-    await request(app).post(`/api/enrollments/${courseId}/enroll`).set('Authorization', `Bearer ${empToken}`).expect(201);
+    // employee requests enrollment (pending approval)
+    const enrollRes = await request(app)
+      .post(`/api/enrollments/${courseId}/enroll`)
+      .set('Authorization', `Bearer ${empToken}`)
+      .expect(201);
+    expect(enrollRes.body.enrollment.status).toBe('pending');
 
-    // mark lesson complete
+    // cannot access course content before approval
     const lessonId = lessonRes.body.chapter.lessons[0]._id || lessonRes.body.chapter.lessons[0]._id;
+    await request(app)
+      .post(`/api/enrollments/${courseId}/complete-lesson`)
+      .set('Authorization', `Bearer ${empToken}`)
+      .send({ chapterId: chapter._id, lessonId })
+      .expect(403);
+
+    // admin approves the enrollment request
+    const pending = await request(app)
+      .get('/api/enrollments/me')
+      .set('Authorization', `Bearer ${empToken}`)
+      .expect(200);
+    const enrollmentId = pending.body.enrollments[0]._id;
+    await request(app)
+      .post(`/api/enrollments/${enrollmentId}/approve`)
+      .set('Authorization', `Bearer ${token}`)
+      .expect(200);
+
+    // now mark lesson complete
     await request(app).post(`/api/enrollments/${courseId}/complete-lesson`).set('Authorization', `Bearer ${empToken}`).send({ chapterId: chapter._id, lessonId }).expect(200);
 
     // create quiz for course
