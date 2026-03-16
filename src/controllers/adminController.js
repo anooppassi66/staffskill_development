@@ -171,3 +171,40 @@ exports.dashboard = async (req, res, next) => {
     next(err);
   }
 };
+
+exports.getEnrolledEmployees = async (req, res, next) => {
+  try {
+    const enrollments = await Enrollment.find()
+      .populate('user', 'first_name last_name email')
+      .populate('course', 'title');
+
+    const employeeMap = {};
+
+    enrollments.forEach(enrollment => {
+      const user = enrollment.user;
+      const course = enrollment.course;
+
+      if (!user || !course) return; // Skip if user or course is missing
+
+      const userId = user._id.toString();
+
+      if (!employeeMap[userId]) {
+        employeeMap[userId] = {
+          _id: userId,
+          first_name: user.first_name,
+          last_name: user.last_name,
+          email: user.email,
+          courses: []
+        };
+      }
+      
+      employeeMap[userId].courses.push(course.title);
+    });
+
+    const enrolledEmployees = Object.values(employeeMap);
+
+    return res.json({ enrolledEmployees });
+  } catch (err) {
+    next(err);
+  }
+};

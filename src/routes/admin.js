@@ -12,6 +12,9 @@ router.put('/employees/:employeeId', authMiddleware, requireRole('admin'), admin
 // Admin-only quiz management
 router.post('/quizzes/:quizId/deactivate', authMiddleware, requireRole('admin'), adminController.deactivateQuiz);
 
+// Admin-only enrolled employees
+router.get('/enrolled-employees', authMiddleware, requireRole('admin'), adminController.getEnrolledEmployees);
+
 router.get('/dashboard', authMiddleware, requireRole('admin'), adminController.dashboard);
 
 module.exports = router;
