@@ -20,114 +20,73 @@ exports.generateCertificate = async (userId, courseId, quizId, marks = 0, outOf 
   } catch {}
   const filePath = path.join(outDir, fileName);
 
-  const doc = new PDFDocument({ size: 'A4', layout: "landscape",margin: 50 });
+  const doc = new PDFDocument({ size: 'A4', layout: "landscape", margin: 0 });
   const stream = fs.createWriteStream(filePath);
   doc.pipe(stream);
 
-  // doc.fontSize(20).text('Certificate of Completion', { align: 'center' });
-  // doc.moveDown();
-  // doc.fontSize(14).text(`This certifies that ${user.first_name || ''} ${user.last_name || ''}` , { align: 'center' });
-  // doc.moveDown();
-  // doc.fontSize(12).text(`Has successfully completed the course: ${course.title}`, { align: 'center' });
-  // doc.moveDown();
-  // doc.text(`Date: ${new Date().toLocaleDateString()}`, { align: 'center' });
-  // if (Number.isFinite(marks) && Number.isFinite(outOf) && outOf > 0) {
-  //   doc.moveDown();
-  //   doc.text(`Marks: ${marks} / ${outOf}`, { align: 'center' });
-  // }
+  const qr = require('qr-image');
+  
+  // Background
+  doc.rect(0, 0, doc.page.width, doc.page.height).fill('#ffffff');
+  // Left Sidebar
+  doc.rect(0, 0, 210, doc.page.height).fill('#052549');
+  
+  // Sidebar Logo
+  const logoPath = path.join(__dirname, '..', 'assets', 'logo.png');
+  if (fs.existsSync(logoPath)) {
+    doc.image(logoPath, 40, 60, { width: 130 });
+  }
+  
+  // Certificate specific details (Dummy QR code with user id and course id for validation)
+  const validationUrl = `${process.env.FRONTEND_URL || 'https://example.com'}/verify-certificate/${user._id}/${course._id}`;
+  const qrImage = qr.imageSync(validationUrl, { type: 'png', margin: 0 });
+  doc.image(qrImage, 55, 420, { width: 100 });
 
-  // doc.end();
+  // Add QR code white background to match design
+  doc.rect(45, 410, 120, 120).lineWidth(2).stroke('#ffffff');
 
+  // Title text
+  doc.font('Helvetica-Bold').fontSize(40).fillColor('#2d2d2d').text('CERTIFICATE', 240, 70);
+  doc.font('Helvetica-Bold').fontSize(22).text('OF COMPLETION', 240, 115);
 
-  // New code 
-
-   const pageWidth = doc.page.width;
-  const center = pageWidth / 2;
-
-  // Border
-  doc
-    .lineWidth(3)
-    .rect(20, 20, doc.page.width - 40, doc.page.height - 40)
-    .stroke("#1f4e79");
-
-  // Title
-  doc
-    .fontSize(40)
-    .fillColor("#1f4e79")
-    .font("Helvetica-Bold")
-    .text("CERTIFICATE", 0, 80, { align: "center" });
-
-  doc
-    .fontSize(20)
-    .fillColor("#555")
-    .text("OF COMPLETION", { align: "center" });
+  // Golden Badge
+  const currentYear = new Date().getFullYear().toString();
+  doc.circle(700, 100, 45).fill('#e5b850');
+  doc.circle(700, 100, 40).lineWidth(1).stroke('#ffffff');
+  doc.font('Helvetica-Bold').fontSize(16).fillColor('#052549').text(currentYear, 680, 85);
+  doc.font('Helvetica-Bold').fontSize(8).fillColor('#052549').text('AWARDED', 681, 105);
+  
+  // Ribbons for badge
+  doc.polygon([670, 140], [665, 190], [685, 175], [705, 195], [695, 145]).fill('#052549');
+  doc.polygon([730, 140], [735, 190], [715, 175], [695, 195], [705, 145]).fill('#052549');
 
   // Presented text
-  doc.moveDown(2);
-
-  doc
-    .fontSize(16)
-    .fillColor("#444")
-    .text("This certificate is proudly presented to", {
-      align: "center"
-    });
-
+  doc.font('Helvetica').fontSize(16).fillColor('#333333').text('We proudly present this certificate to', 240, 240);
+  
   // Name
-  doc.moveDown(1);
+  doc.font('Helvetica-Bold').fontSize(40).fillColor('#2d2d2d').text(`${user.first_name || ''} ${user.last_name || ''}`, 240, 280);
+  
+  // Separator line
+  doc.moveTo(240, 335).lineTo(700, 335).lineWidth(0.5).stroke('#cccccc');
+  
+  // Course and description
+  doc.font('Helvetica').fontSize(14).fillColor('#333333').text(`honouring completion of the course: "${course.title || 'Brand Management'}"\nFor the ability to objectively assess the profitability of\nprojects and present products.`, 240, 360, { lineGap: 4 });
 
-  doc
-    .fontSize(34)
-    .fillColor("#000")
-    .font("Helvetica-Bold")
-    .text(`${user.first_name || ''} ${user.last_name || ''}`, {
-      align: "center"
-    });
+  // Signatures
+  // doc.font('Helvetica-Oblique').fontSize(26).fillColor('#2d2d2d').text('Jane Kane', 240, 480);
+  // doc.font('Helvetica-Bold').fontSize(10).fillColor('#2d2d2d').text('Jane Kane', 240, 510);
+  // doc.font('Helvetica-Bold').fontSize(10).fillColor('#666666').text('MARKETING DIRECTOR', 240, 525);
+  
+  // const formattedDate = new Date().toISOString().split('T')[0];
+  // doc.font('Helvetica-Bold').fontSize(10).fillColor('#666666').text(formattedDate, 240, 555);
 
-  // Course text
-  doc.moveDown(1);
-
-  doc
-    .fontSize(16)
-    .font("Helvetica")
-    .text("for successfully completing the course", {
-      align: "center"
-    });
-
-  doc.moveDown(1);
-
-  doc
-    .fontSize(26)
-    .font("Helvetica-Bold")
-    .fillColor("#1f4e79")
-    .text(`${course.title}`, {
-      align: "center"
-    });
-
-  // Date + ID
-  doc.moveDown(2);
-
-  doc
-    .fontSize(14)
-    .fillColor("#444")
-    .text(`Date: ${new Date().toLocaleDateString()}`, center - 200, 420);
-
-  // Signature line
-  doc
-    .moveTo(center - 200, 480)
-    .lineTo(center - 80, 480)
-    .stroke();
-
-  doc
-    .moveTo(center + 80, 480)
-    .lineTo(center + 200, 480)
-    .stroke();
-
-  // doc
-  //   .fontSize(12)
-  //   .text("Instructor", center - 180, 485);
-
-  // doc
-  //   .text("Authorized Signature", center + 90, 485);
+  doc.font('Helvetica-Oblique').fontSize(26).fillColor('#2d2d2d').text('Harika Maganti', 520, 480);
+  doc.font('Helvetica-Bold').fontSize(10).fillColor('#2d2d2d').text('Harika Maganti,', 520, 510);
+  doc.font('Helvetica-Bold').fontSize(10).fillColor('#666666').text('Technology Manager', 520, 525);
+  
+  // A pseudo UUID for certificate id
+  // const randomCertId = '93c7eb85-b2ee-49ff-acad-\n6b43f1c0d8cb'; 
+  // doc.font('Helvetica-Bold').fontSize(10).fillColor('#666666').text(randomCertId, 520, 555);
 
   doc.end();
 
@@ -136,7 +95,14 @@ exports.generateCertificate = async (userId, courseId, quizId, marks = 0, outOf 
     stream.on('error', reject);
   });
 
-  const cert = await Certificate.create({ user: userId, course: courseId, quiz: quizId, filePath: `/certificates/${fileName}`, marks: marks || 0, outOf: outOf || 0 });
+  const cert = await Certificate.create({ 
+      user: userId, 
+      course: courseId, 
+      quiz: quizId, 
+      filePath: `/certificates/${fileName}`, 
+      marks: marks || 0, 
+      outOf: outOf || 0 
+  });
   return cert;
 };
 
