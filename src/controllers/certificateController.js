@@ -39,8 +39,8 @@ exports.generateCertificate = async (userId, courseId, quizId, marks = 0, outOf 
   
   // Certificate specific details (Dummy QR code with user id and course id for validation)
   const validationUrl = `${process.env.FRONTEND_URL || 'https://example.com'}/verify-certificate/${user._id}/${course._id}`;
-  const qrImage = qr.imageSync(validationUrl, { type: 'png', margin: 0 });
-  doc.image(qrImage, 55, 420, { width: 100 });
+  // const qrImage = qr.imageSync(validationUrl, { type: 'png', margin: 0 });
+  // doc.image(qrImage, 55, 420, { width: 100 });
 
   // Add QR code white background to match design
   doc.rect(45, 410, 120, 120).lineWidth(2).stroke('#ffffff');
@@ -70,7 +70,7 @@ exports.generateCertificate = async (userId, courseId, quizId, marks = 0, outOf 
   doc.moveTo(240, 335).lineTo(700, 335).lineWidth(0.5).stroke('#cccccc');
   
   // Course and description
-  doc.font('Helvetica').fontSize(14).fillColor('#333333').text(`honouring completion of the course: "${course.title || 'Brand Management'}"\nFor the ability to objectively assess the profitability of\nprojects and present products.`, 240, 360, { lineGap: 4 });
+  doc.font('Helvetica').fontSize(14).fillColor('#333333').text(`honouring completion of the course: "${course.title || 'Brand Management'}"\n`, 240, 360, { lineGap: 4 });
 
   // Signatures
   // doc.font('Helvetica-Oblique').fontSize(26).fillColor('#2d2d2d').text('Jane Kane', 240, 480);
