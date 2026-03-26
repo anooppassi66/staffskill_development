@@ -176,7 +176,7 @@ exports.getEnrolledEmployees = async (req, res, next) => {
   try {
     const enrollments = await Enrollment.find()
       .populate('user', 'first_name last_name email')
-      .populate('course', 'title');
+      .populate('course', 'title chapters');
 
     const employeeMap = {};
 
@@ -198,7 +198,16 @@ exports.getEnrolledEmployees = async (req, res, next) => {
         };
       }
       
-      employeeMap[userId].courses.push(course.title);
+      const totalLessons = course.chapters ? course.chapters.reduce((sum, ch) => sum + (ch.lessons ? ch.lessons.length : 0), 0) : 0;
+      const completedLessons = enrollment.completedLessons ? enrollment.completedLessons.length : 0;
+      let percentage = 0;
+      if (totalLessons > 0) {
+        percentage = Math.round((completedLessons / totalLessons) * 100);
+      } else if (enrollment.isCompleted) {
+        percentage = 100;
+      }
+      
+      employeeMap[userId].courses.push(`${course.title} (${percentage}%)`);
     });
 
     const enrolledEmployees = Object.values(employeeMap);
