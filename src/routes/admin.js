@@ -8,6 +8,7 @@ router.get('/employees', authMiddleware, requireRole('admin'), adminController.l
 router.post('/employees/:employeeId/deactivate', authMiddleware, requireRole('admin'), adminController.deactivateEmployee);
 router.post('/employees/:employeeId/activate', authMiddleware, requireRole('admin'), adminController.activateEmployee);
 router.put('/employees/:employeeId', authMiddleware, requireRole('admin'), adminController.updateEmployee);
+router.post('/employees/:employeeId/regenerate-password', authMiddleware, requireRole('admin'), adminController.regeneratePassword);
 
 // Admin-only quiz management
 router.post('/quizzes/:quizId/deactivate', authMiddleware, requireRole('admin'), adminController.deactivateQuiz);

@@ -106,6 +106,24 @@ exports.updateEmployee = async (req, res, next) => {
   }
 };
 
+// Regenerate employee password
+exports.regeneratePassword = async (req, res, next) => {
+  try {
+    const employeeId = req.params.employeeId;
+    const user = await User.findById(employeeId);
+    if (!user) return res.status(404).json({ message: 'employee not found' });
+    if (user.role !== 'employee') return res.status(400).json({ message: 'user is not an employee' });
+
+    const tempPassword = Math.random().toString(36).slice(-8);
+    user.password = tempPassword;
+    await user.save();
+
+    return res.json({ message: 'password regenerated', tempPassword });
+  } catch (err) {
+    next(err);
+  }
+};
+
 // Deactivate quiz (soft delete)
 exports.deactivateQuiz = async (req, res, next) => {
   try {
