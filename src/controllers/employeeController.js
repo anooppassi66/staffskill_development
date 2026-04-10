@@ -13,6 +13,7 @@ exports.dashboard = async (req, res, next) => {
     for (const en of enrollments) {
       const course = await Course.findById(en.course._id).populate('category');
       if (!course) continue;
+      if (course.status !== 'active' && course.isActive !== true) continue;
 
       // compute total lessons
       let totalLessons = 0;

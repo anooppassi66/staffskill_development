@@ -203,6 +203,7 @@ exports.getEnrolledEmployees = async (req, res, next) => {
       const course = enrollment.course;
 
       if (!user || !course) return; // Skip if user or course is missing
+      if (course.status !== 'active' && course.isActive !== true) return;
 
       const userId = user._id.toString();
 

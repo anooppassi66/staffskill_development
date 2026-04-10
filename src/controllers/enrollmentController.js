@@ -76,7 +76,8 @@ exports.listUserEnrollments = async (req, res, next) => {
     if (req.query.status === 'completed') filter.isCompleted = true;
     if (req.query.approval === 'pending') filter.status = 'pending';
     if (req.query.approval === 'approved') filter.status = 'approved';
-    const enrollments = await Enrollment.find(filter).populate({ path: 'course', populate: { path: 'category' } });
+    let enrollments = await Enrollment.find(filter).populate({ path: 'course', populate: { path: 'category' } });
+    enrollments = enrollments.filter(e => e.course && (e.course.status === 'active' || e.course.isActive === true));
     return res.json({ enrollments });
   } catch (err) {
     next(err);
@@ -85,9 +86,10 @@ exports.listUserEnrollments = async (req, res, next) => {
 
 exports.listPendingEnrollments = async (req, res, next) => {
   try {
-    const enrollments = await Enrollment.find({ status: 'pending' })
+    let enrollments = await Enrollment.find({ status: 'pending' })
       .populate({ path: 'user', select: '-password' })
       .populate({ path: 'course', populate: { path: 'category' } });
+    enrollments = enrollments.filter(e => e.course && (e.course.status === 'active' || e.course.isActive === true));
     return res.json({ enrollments });
   } catch (err) {
     next(err);
