@@ -146,6 +146,9 @@ exports.dashboard = async (req, res, next) => {
     const activeCoursesDocs = await Course.find({ isActive: true, status: 'active' }, '_id');
     const activeCourseIds = activeCoursesDocs.map(c => c._id);
 
+    const distinctEnrolledCourses = await Enrollment.distinct('course', { course: { $in: activeCourseIds } });
+    const enrolledCoursesCount = distinctEnrolledCourses.length;
+
     const [totalEmployees, totalCourses, activeCourses, totalEnrollments, completedEnrollments] = await Promise.all([
       User.countDocuments({ role: 'employee', isActive: true }),
       Course.countDocuments({ isActive: true, status: 'active' }),
@@ -179,7 +182,7 @@ exports.dashboard = async (req, res, next) => {
 
     return res.json({
       metrics: {
-        enrolledCourses: totalEnrollments,
+        enrolledCourses: enrolledCoursesCount,
         activeCourses,
         avgCoursesCompleted,
         totalEmployees,

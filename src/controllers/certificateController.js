@@ -111,7 +111,12 @@ exports.listCertificates = async (req, res, next) => {
     const filter = {};
     if (req.user.role !== 'admin') {
       filter.user = req.user.id;
+    } else {
+      const activeUsersDocs = await User.find({ isActive: true }, '_id');
+      const activeUserIds = activeUsersDocs.map(u => u._id);
+      filter.user = { $in: activeUserIds };
     }
+
     const hasSkip = req.query.skip !== undefined;
     const limit = Math.min(100, parseInt(req.query.limit || '10'));
     const page = hasSkip ? Math.floor(parseInt(req.query.skip || '0') / limit) + 1 : Math.max(1, parseInt(req.query.page || '1'));

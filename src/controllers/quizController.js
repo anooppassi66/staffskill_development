@@ -80,7 +80,20 @@ exports.listQuizzes = async (req, res, next) => {
     if (!(req.query.include_inactive === 'true' && req.user && req.user.role === 'admin')) {
       filter.isActive = true;
     }
-    if (req.query.course) filter.course = req.query.course;
+    
+    if (req.query.course) {
+      filter.course = req.query.course;
+    } else {
+      const Course = require('../models/Course');
+      const activeCoursesDocs = await Course.find({ isActive: true, status: 'active' }, '_id');
+      const activeCourseIds = activeCoursesDocs.map(c => c._id);
+      
+      filter.$or = [
+        { course: { $in: activeCourseIds } },
+        { course: null },
+        { course: { $exists: false } }
+      ];
+    }
 
     const page = Math.max(1, parseInt(req.query.page || '1'));
     const limit = Math.min(100, parseInt(req.query.limit || '10'));
