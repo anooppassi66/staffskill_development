@@ -196,18 +196,21 @@ exports.dashboard = async (req, res, next) => {
 exports.getEnrolledEmployees = async (req, res, next) => {
   try {
     const enrollments = await Enrollment.find()
-      .populate('user', 'first_name last_name email')
-      .populate('course', 'title chapters');
+      .populate('user', 'first_name last_name email isActive')
+      .populate('course', 'title chapters status isActive');
 
     const employeeMap = {};
+    let totalValidEnrollments = 0;
 
     enrollments.forEach(enrollment => {
       const user = enrollment.user;
       const course = enrollment.course;
 
       if (!user || !course) return; // Skip if user or course is missing
-      if (course.status !== 'active' && course.isActive !== true) return;
+      if (course.status !== 'active' || course.isActive !== true) return;
+      if (user.isActive === false) return; // Extra check to skip deactivated users
 
+      totalValidEnrollments++;
       const userId = user._id.toString();
 
       if (!employeeMap[userId]) {
@@ -219,7 +222,7 @@ exports.getEnrolledEmployees = async (req, res, next) => {
           courses: []
         };
       }
-      
+
       const totalLessons = course.chapters ? course.chapters.reduce((sum, ch) => sum + (ch.lessons ? ch.lessons.length : 0), 0) : 0;
       const completedLessons = enrollment.completedLessons ? enrollment.completedLessons.length : 0;
       let percentage = 0;
@@ -228,13 +231,13 @@ exports.getEnrolledEmployees = async (req, res, next) => {
       } else if (enrollment.isCompleted) {
         percentage = 100;
       }
-      
+
       employeeMap[userId].courses.push(`${course.title} (${percentage}%)`);
     });
 
     const enrolledEmployees = Object.values(employeeMap);
 
-    return res.json({ enrolledEmployees });
+    return res.json({ enrolledEmployees, enrollmentCount: totalValidEnrollments });
   } catch (err) {
     next(err);
   }
