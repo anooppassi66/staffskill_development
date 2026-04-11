@@ -12,7 +12,7 @@ exports.listEmployees = async (req, res, next) => {
     const skip = hasSkip ? Math.max(0, parseInt(req.query.skip || '0')) : (page - 1) * limit;
 
     const filter = { role: 'employee', isActive: true };
-    
+
     // search by name/email/user_name
     if (req.query.q) {
       const q = String(req.query.q).trim();
@@ -148,8 +148,8 @@ exports.dashboard = async (req, res, next) => {
 
     const [totalEmployees, totalCourses, activeCourses, totalEnrollments, completedEnrollments] = await Promise.all([
       User.countDocuments({ role: 'employee', isActive: true }),
-      Course.countDocuments({ isActive: true, status: 'active' }),
-      Course.countDocuments({ isActive: true, status: 'active' }),
+      Course.countDocuments({ isActive: true }),
+      Course.countDocuments({ isActive: true }),
       Enrollment.countDocuments({ course: { $in: activeCourseIds } }),
       Enrollment.countDocuments({ course: { $in: activeCourseIds }, isCompleted: true })
     ]);
@@ -164,7 +164,7 @@ exports.dashboard = async (req, res, next) => {
     const avgCoursesCompleted = totalEmployees > 0 ? Math.round((completedEnrollments / totalEmployees) * 100) / 100 : 0;
     const employeeCompletionPercentage = totalEmployees > 0 ? Math.round((employeesWithCompleted / totalEmployees) * 100) : 0;
 
-    const recent = await Course.find({ isActive: true, status: 'active' }).sort({ createdAt: -1 }).limit(3);
+    const recent = await Course.find({ isActive: true }).sort({ createdAt: -1 }).limit(3);
     const recentWithEnrollCounts = await Promise.all(recent.map(async (c) => {
       const enrolledCount = await Enrollment.countDocuments({ course: c._id });
       let thumb = null;
