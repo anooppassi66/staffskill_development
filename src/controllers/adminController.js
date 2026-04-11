@@ -11,11 +11,8 @@ exports.listEmployees = async (req, res, next) => {
     const page = hasSkip ? Math.floor(parseInt(req.query.skip || '0') / limit) + 1 : Math.max(1, parseInt(req.query.page || '1'));
     const skip = hasSkip ? Math.max(0, parseInt(req.query.skip || '0')) : (page - 1) * limit;
 
-    const filter = { role: 'employee' };
-    // optionally filter by active status
-    if (req.query.active !== undefined) {
-      filter.isActive = req.query.active === 'true';
-    }
+    const filter = { role: 'employee', isActive: true };
+    
     // search by name/email/user_name
     if (req.query.q) {
       const q = String(req.query.q).trim();
