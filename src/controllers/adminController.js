@@ -207,7 +207,7 @@ exports.getEnrolledEmployees = async (req, res, next) => {
       const course = enrollment.course;
 
       if (!user || !course) return; // Skip if user or course is missing
-      if (course.status !== 'active' || course.isActive !== true) return;
+      if ((course.status !== 'active' && course.status !== 'published') || course.isActive !== true) return;
       if (user.isActive === false) return; // Extra check to skip deactivated users
 
       totalValidEnrollments++;
