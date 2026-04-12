@@ -140,7 +140,10 @@ exports.deactivateQuiz = async (req, res, next) => {
 
 exports.dashboard = async (req, res, next) => {
   try {
-    const activeCoursesDocs = await Course.find({ isActive: true, status: 'active' }, '_id');
+    const activeCoursesDocs = await Course.find({
+  isActive: true,
+  $or: [{ status: 'active' }, { status: 'published' }],
+}, '_id');
     const activeCourseIds = activeCoursesDocs.map(c => c._id);
 
     const distinctEnrolledCourses = await Enrollment.distinct('course', { course: { $in: activeCourseIds } });
