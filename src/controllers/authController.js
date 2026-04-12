@@ -12,7 +12,7 @@ exports.seedAdmin = async (req, res, next) => {
     const adminEmail = process.env.ADMIN_EMAIL;
     const adminPassword = process.env.ADMIN_PASSWORD;
     if (!adminEmail || !adminPassword) return res.status(400).json({ message: 'ADMIN_EMAIL and ADMIN_PASSWORD must be set' });
-    let admin = await User.findOne({ email: adminEmail.toLowerCase() });
+    let admin = await User.findOne({ email: adminEmail.toLowerCase(), isActive: true });
     if (admin) return res.json({ message: 'admin already exists' });
     admin = await User.create({ email: adminEmail.toLowerCase(), password: adminPassword, role: 'admin', first_name: 'Admin' });
     return res.json({ message: 'admin created', email: admin.email });
@@ -26,7 +26,7 @@ exports.register = async (req, res, next) => {
     // only admin allowed (middleware should have enforced)
     const { first_name, last_name, email, phone_number, role } = req.body;
     if (!email) return res.status(400).json({ message: 'email required' });
-    const existing = await User.findOne({ email: email.toLowerCase() });
+    const existing = await User.findOne({ email: email.toLowerCase() , isActive : true });
     if (existing) return res.status(400).json({ message: 'email already in use' });
 
     // generate temporary password
@@ -51,7 +51,7 @@ exports.login = async (req, res, next) => {
   try {
     const { email, password } = req.body;
     if (!email || !password) return res.status(400).json({ message: 'email and password required' });
-    const user = await User.findOne({ email: email.toLowerCase() });
+    const user = await User.findOne({ email: email.toLowerCase() , isActive : true });
     if (!user) return res.status(401).json({ message: 'invalid credentials' });
     const ok = await user.comparePassword(password);
     if (!ok) return res.status(401).json({ message: 'invalid credentials' });
