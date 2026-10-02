@@ -7,6 +7,8 @@ const { authMiddleware, requireRole } = require('../middleware/auth');
 
 // public
 router.post('/login', [body('email').isEmail(), body('password').isLength({ min: 1 }), validate], authController.login);
+// public self-registration for normal users - stays pending until admin approval
+router.post('/signup', [body('email').isEmail(), body('password').isLength({ min: 6 }).withMessage('password min 6'), validate], authController.signup);
 // seed admin (dev) - call once
 router.get('/seed-admin', authController.seedAdmin);
 

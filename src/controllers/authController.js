@@ -47,6 +47,30 @@ exports.register = async (req, res, next) => {
   }
 };
 
+exports.signup = async (req, res, next) => {
+  try {
+    const { first_name, last_name, email, phone_number, password } = req.body;
+    if (!email || !password) return res.status(400).json({ message: 'email and password required' });
+    const existing = await User.findOne({ email: email.toLowerCase(), isActive: true });
+    if (existing) return res.status(400).json({ message: 'email already in use' });
+
+    const user = await User.create({
+      first_name,
+      last_name,
+      email: email.toLowerCase(),
+      phone_number,
+      role: 'normal_user',
+      status: 'pending',
+      password,
+      user_name: (email.split('@')[0])
+    });
+
+    return res.status(201).json({ message: 'account created, pending admin approval', user: { id: user._id, email: user.email, role: user.role, status: user.status } });
+  } catch (err) {
+    next(err);
+  }
+};
+
 exports.login = async (req, res, next) => {
   try {
     const { email, password } = req.body;
@@ -56,6 +80,8 @@ exports.login = async (req, res, next) => {
     const ok = await user.comparePassword(password);
     if (!ok) return res.status(401).json({ message: 'invalid credentials' });
     if (!user.isActive) return res.status(403).json({ message: 'account deactivated' });
+    if (user.status === 'pending') return res.status(403).json({ message: 'account pending admin approval' });
+    if (user.status === 'rejected') return res.status(403).json({ message: 'account rejected' });
     const token = signToken(user);
     return res.json({ token, user: { id: user._id, email: user.email, role: user.role, first_name: user.first_name, last_name: user.last_name } });
   } catch (err) {

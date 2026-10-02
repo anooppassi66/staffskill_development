@@ -1,10 +1,20 @@
 const Course = require('../models/Course');
 
+// visibleTo can arrive as a repeated form field (array), a single string,
+// a comma-separated string, or be absent altogether.
+function parseVisibleTo(raw) {
+  if (raw === undefined) return undefined;
+  if (Array.isArray(raw)) return raw;
+  if (typeof raw === 'string') return raw.split(',').map(v => v.trim()).filter(Boolean);
+  return undefined;
+}
+
 exports.createCourse = async (req, res, next) => {
   try {
     const { title, category, level, language, short_description, description, status, course_image } = req.body;
     if (!title || !category) return res.status(400).json({ message: 'title and category are required' });
-    const course = await Course.create({ title, category, level, language, short_description, description, status, course_image });
+    const visibleTo = parseVisibleTo(req.body.visibleTo);
+    const course = await Course.create({ title, category, level, language, short_description, description, status, course_image, ...(visibleTo ? { visibleTo } : {}) });
     return res.status(201).json({ course });
   } catch (err) {
     next(err);
@@ -16,6 +26,8 @@ exports.editCourse = async (req, res, next) => {
     const updates = {};
     const allowed = ['title', 'category', 'level', 'language', 'short_description', 'description', 'status', 'isActive'];
     allowed.forEach(k => { if (req.body[k] !== undefined) updates[k] = req.body[k]; });
+    const visibleTo = parseVisibleTo(req.body.visibleTo);
+    if (visibleTo !== undefined) updates.visibleTo = visibleTo;
     const course = await Course.findByIdAndUpdate(req.params.id, updates, { new: true });
     if (!course) return res.status(404).json({ message: 'course not found' });
     return res.json({ course });
@@ -58,6 +70,11 @@ exports.listCourses = async (req, res, next) => {
 
     // only include active unless explicitly requested
     if (!req.query.include_inactive) filter.isActive = true;
+
+    // non-admins only see courses whose visibleTo includes their role
+    if (req.user && req.user.role && req.user.role !== 'admin') {
+      filter.visibleTo = req.user.role;
+    }
 
     if (req.user && req.user.id) {
       const Enrollment = require('../models/Enrollment');
@@ -117,6 +134,11 @@ exports.getCoursePublic = async (req, res, next) => {
     const course = await CourseModel.findById(req.params.id).populate('category');
     if (!course) return res.status(404).json({ message: 'course not found' });
 
+    // enforce course-level audience visibility for non-admin viewers
+    if (req.user && req.user.role && req.user.role !== 'admin' && !course.visibleTo.includes(req.user.role)) {
+      return res.status(404).json({ message: 'course not found' });
+    }
+
     // base response
     const response = { course: course.toObject() };
     const enrolledCount = await Enrollment.countDocuments({ course: course._id });
@@ -132,11 +154,14 @@ exports.getCoursePublic = async (req, res, next) => {
     if (req.user && req.user.id) {
       const enrollment = await Enrollment.findOne({ user: req.user.id, course: course._id });
       const completedSet = new Set((enrollment ? enrollment.completedLessons : []).map(cl => `${cl.chapter.toString()}::${cl.lesson.toString()}`));
+      const isAdmin = req.user.role === 'admin';
 
-      // annotate chapters/lessons
+      // annotate chapters/lessons, filtering out lessons not visible to this viewer's role
       response.course.chapters = response.course.chapters.map(ch => {
         const chId = ch._id;
-        const lessons = (ch.lessons || []).map(ls => ({
+        const lessons = (ch.lessons || [])
+          .filter(ls => isAdmin || (ls.visibleTo || []).includes(req.user.role))
+          .map(ls => ({
             _id: ls._id,
             name: ls.name,
             video_url: ls.video_url,
@@ -179,6 +204,8 @@ exports.addLesson = async (req, res, next) => {
     if (!chapter) return res.status(404).json({ message: 'chapter not found' });
 
     const lesson = { name, description };
+    const visibleTo = parseVisibleTo(req.body.visibleTo);
+    if (visibleTo) lesson.visibleTo = visibleTo;
 
     // multer.fields places uploaded files in req.files as arrays
     // if (req.files) {
@@ -222,6 +249,8 @@ exports.updateLesson = async (req, res, next) => {
 
     if (name !== undefined) lesson.name = name;
     if (description !== undefined) lesson.description = description;
+    const visibleTo = parseVisibleTo(req.body.visibleTo);
+    if (visibleTo !== undefined) lesson.visibleTo = visibleTo;
 
     // if (req.files) {
     //   if (req.files.video && req.files.video[0]) {

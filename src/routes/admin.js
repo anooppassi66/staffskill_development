@@ -16,6 +16,11 @@ router.post('/quizzes/:quizId/deactivate', authMiddleware, requireRole('admin'),
 // Admin-only enrolled employees
 router.get('/enrolled-employees', authMiddleware, requireRole('admin'), adminController.getEnrolledEmployees);
 
+// Admin-only normal user approval
+router.get('/users/pending', authMiddleware, requireRole('admin'), adminController.listPendingUsers);
+router.post('/users/:userId/approve', authMiddleware, requireRole('admin'), adminController.approveUser);
+router.post('/users/:userId/reject', authMiddleware, requireRole('admin'), adminController.rejectUser);
+
 router.get('/dashboard', authMiddleware, requireRole('admin'), adminController.dashboard);
 
 module.exports = router;

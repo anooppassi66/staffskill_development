@@ -196,6 +196,46 @@ exports.dashboard = async (req, res, next) => {
   }
 };
 
+// List normal users awaiting admin approval
+exports.listPendingUsers = async (req, res, next) => {
+  try {
+    const users = await User.find({ role: 'normal_user', status: 'pending' })
+      .select('-password')
+      .sort({ createdAt: -1 });
+    return res.json({ users });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// Approve a pending normal user
+exports.approveUser = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.params.userId);
+    if (!user) return res.status(404).json({ message: 'user not found' });
+    if (user.role !== 'normal_user') return res.status(400).json({ message: 'user is not a normal user' });
+    user.status = 'approved';
+    await user.save();
+    return res.json({ message: 'user approved', user: { id: user._id, email: user.email, status: user.status } });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// Reject a pending normal user
+exports.rejectUser = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.params.userId);
+    if (!user) return res.status(404).json({ message: 'user not found' });
+    if (user.role !== 'normal_user') return res.status(400).json({ message: 'user is not a normal user' });
+    user.status = 'rejected';
+    await user.save();
+    return res.json({ message: 'user rejected', user: { id: user._id, email: user.email, status: user.status } });
+  } catch (err) {
+    next(err);
+  }
+};
+
 exports.getEnrolledEmployees = async (req, res, next) => {
   try {
     const enrollments = await Enrollment.find()

@@ -6,6 +6,7 @@ const LessonSchema = new mongoose.Schema({
   thumbnail_url: { type: String },
   description: { type: String },
   durationSeconds: { type: Number },
+  visibleTo: { type: [String], enum: ['normal_user', 'employee'], default: ['normal_user', 'employee'] },
   createdAt: { type: Date, default: Date.now }
 });
 
@@ -25,6 +26,7 @@ const CourseSchema = new mongoose.Schema({
   course_image: { type: String },
   videoDurationMinutes: { type: Number, default: 0 },
   chapters: [ChapterSchema],
+  visibleTo: { type: [String], enum: ['normal_user', 'employee'], default: ['normal_user', 'employee'] },
   status: { type: String, enum: ['published', 'draft', 'deleted'], default: 'draft' },
   isActive: { type: Boolean, default: true },
   createdAt: { type: Date, default: Date.now }

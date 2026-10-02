@@ -12,6 +12,7 @@ const quizRoutes = require('./routes/quiz');
 const certificateRoutes = require('./routes/certificate');
 const employeeRoutes = require('./routes/employee');
 const adminRoutes = require('./routes/admin');
+const commentRoutes = require('./routes/comment');
 const path = require('path');
 
 app.use(cors());
@@ -25,6 +26,7 @@ app.use('/api/enrollments', enrollmentRoutes);
 app.use('/api/quizzes', quizRoutes);
 app.use('/api/certificates', certificateRoutes);
 app.use('/api/employee', employeeRoutes);
+app.use('/api/comments', commentRoutes);
 
 // serve uploaded media
 app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
