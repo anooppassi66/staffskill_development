@@ -1,3 +1,5 @@
+const crypto = require('crypto');
+const bcrypt = require('bcrypt');
 const User = require('../models/User');
 const Quiz = require('../models/Quiz');
 const Course = require('../models/Course');
@@ -12,7 +14,9 @@ exports.listEmployees = async (req, res, next) => {
     const skip = hasSkip ? Math.max(0, parseInt(req.query.skip || '0')) : (page - 1) * limit;
 
     const role = ['employee', 'normal_user'].includes(req.query.role) ? req.query.role : 'employee';
-    const filter = { role, isActive: true };
+    const filter = { role };
+    if (req.query.active === 'true') filter.isActive = true;
+    else if (req.query.active === 'false') filter.isActive = false;
 
     // search by name/email/user_name
     if (req.query.q) {
@@ -46,7 +50,7 @@ exports.deactivateEmployee = async (req, res, next) => {
     const employeeId = req.params.employeeId;
     const user = await User.findById(employeeId);
     if (!user) return res.status(404).json({ message: 'employee not found' });
-    if (user.role !== 'employee') return res.status(400).json({ message: 'user is not an employee' });
+    if (!['employee', 'normal_user'].includes(user.role)) return res.status(400).json({ message: 'user is not an employee or normal user' });
     if (!user.isActive) return res.status(400).json({ message: 'employee already deactivated' });
 
     user.isActive = false;
@@ -65,7 +69,7 @@ exports.activateEmployee = async (req, res, next) => {
     const employeeId = req.params.employeeId;
     const user = await User.findById(employeeId);
     if (!user) return res.status(404).json({ message: 'employee not found' });
-    if (user.role !== 'employee') return res.status(400).json({ message: 'user is not an employee' });
+    if (!['employee', 'normal_user'].includes(user.role)) return res.status(400).json({ message: 'user is not an employee or normal user' });
     if (user.isActive) return res.status(400).json({ message: 'employee already active' });
     user.isActive = true;
     user.deactivatedAt = null;
@@ -82,7 +86,7 @@ exports.updateEmployee = async (req, res, next) => {
     const employeeId = req.params.employeeId;
     const user = await User.findById(employeeId);
     if (!user) return res.status(404).json({ message: 'employee not found' });
-    if (user.role !== 'employee') return res.status(400).json({ message: 'user is not an employee' });
+    if (!['employee', 'normal_user'].includes(user.role)) return res.status(400).json({ message: 'user is not an employee or normal user' });
     const allowed = ['first_name', 'last_name', 'user_name', 'email', 'phone_number', 'gender', 'dob', 'bio'];
     for (const k of allowed) {
       if (req.body[k] !== undefined) {
@@ -110,11 +114,12 @@ exports.regeneratePassword = async (req, res, next) => {
     const employeeId = req.params.employeeId;
     const user = await User.findById(employeeId);
     if (!user) return res.status(404).json({ message: 'employee not found' });
-    if (user.role !== 'employee') return res.status(400).json({ message: 'user is not an employee' });
+    if (!['employee', 'normal_user'].includes(user.role)) return res.status(400).json({ message: 'user is not an employee or normal user' });
 
-    const tempPassword = Math.random().toString(36).slice(-8);
-    user.password = tempPassword;
-    await user.save();
+    // fixed-length random password; update the hash directly so validation of legacy fields can't fail the reset
+    const tempPassword = crypto.randomBytes(9).toString('base64').replace(/[^A-Za-z0-9]/g, 'x').slice(0, 10);
+    const hash = await bcrypt.hash(tempPassword, 10);
+    await User.updateOne({ _id: user._id }, { $set: { password: hash } });
 
     return res.json({ message: 'password regenerated', tempPassword });
   } catch (err) {
