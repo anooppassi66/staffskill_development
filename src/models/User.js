@@ -9,7 +9,7 @@ const UserSchema = new mongoose.Schema({
   user_name: { type: String },
   email: { type: String, required: true, lowercase: true },
   phone_number: { type: String },
-  gender: { type: String, enum: ['male', 'female', 'other'] },
+  gender: { type: String, lowercase: true, trim: true, enum: ['male', 'female', 'other'] },
   dob: { type: Date },
   bio: { type: String },
   role: { type: String, enum: ['admin', 'employee', 'normal_user'], default: 'employee' },
