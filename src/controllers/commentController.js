@@ -49,7 +49,7 @@ exports.deleteComment = async (req, res, next) => {
   try {
     const comment = await Comment.findById(req.params.commentId);
     if (!comment) return res.status(404).json({ message: 'comment not found' });
-    if (comment.user.toString() !== req.user.id && req.user.role !== 'admin') {
+    if (comment.user.toString() !== String(req.user.id) && req.user.role !== 'admin') {
       return res.status(403).json({ message: 'you can only delete your own comment' });
     }
     await CommentVote.deleteMany({ comment: comment._id });

@@ -69,7 +69,9 @@ exports.listCourses = async (req, res, next) => {
     }
 
     // only include active unless explicitly requested
-    if (!req.query.include_inactive) filter.isActive = true;
+    if (req.query.active === 'false') filter.isActive = false;
+    else if (req.query.active === 'true') filter.isActive = true;
+    else if (!req.query.include_inactive) filter.isActive = true;
 
     // non-admins only see courses whose visibleTo includes their role
     if (req.user && req.user.role && req.user.role !== 'admin') {
