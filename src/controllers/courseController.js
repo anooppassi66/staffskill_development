@@ -24,7 +24,7 @@ exports.createCourse = async (req, res, next) => {
 exports.editCourse = async (req, res, next) => {
   try {
     const updates = {};
-    const allowed = ['title', 'category', 'level', 'language', 'short_description', 'description', 'status', 'isActive'];
+    const allowed = ['title', 'category', 'level', 'language', 'short_description', 'description', 'course_image', 'status', 'isActive'];
     allowed.forEach(k => { if (req.body[k] !== undefined) updates[k] = req.body[k]; });
     const visibleTo = parseVisibleTo(req.body.visibleTo);
     if (visibleTo !== undefined) updates.visibleTo = visibleTo;
